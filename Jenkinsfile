@@ -4,13 +4,13 @@ pipeline {
         stage('Build') { 
             steps { 
                 echo "Building the project..." 
-                sh 'ls -la'  // Linux/macOS command 
-                // For Windows: bat 'dir' 
+                bat 'dir'
             } 
         } 
         stage('Test') { 
             steps { 
                 echo "Running tests..." 
+                bat 'npm test'
             } 
         } 
         stage('Deploy') { 
