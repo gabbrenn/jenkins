@@ -1,9 +1,21 @@
-// Unit test suite for Jenkins CI/CD pipeline
+// test.js - Executed in Jenkins "Test" Stage (npm test)
 const assert = require('assert');
-const server = require('./index');
+const { server, math, VERSION } = require('./index');
 
-console.log('Running automated unit tests for Jenkins pipeline...');
+console.log('====================================================');
+console.log('[STAGE: TEST] Executing automated test suite');
+console.log('====================================================');
 
+let testsPassed = 0;
+
+// Test 1: Math Utility Logic (Unit Tests)
+console.log('-> Running Unit Tests on business math module...');
+assert.strictEqual(math.add(10, 5), 15, '10 + 5 must equal 15');
+assert.strictEqual(math.multiply(4, 5), 20, '4 * 5 must equal 20');
+console.log('  ✔ Unit Test: math.add() and math.multiply() verified.');
+testsPassed += 2;
+
+// Mock Response Helper
 function createMockRes(callback) {
   let statusCode = 200;
   let headers = {};
@@ -24,35 +36,38 @@ function createMockRes(callback) {
   };
 }
 
-// Test 1: Verify health check route (/health)
-const reqHealth = { url: '/health', method: 'GET' };
-const resHealth = createMockRes(({ statusCode, body }) => {
-  assert.strictEqual(statusCode, 200, 'Health endpoint must return status 200');
+// Test 2: Health Check Endpoint Integration Test
+console.log('-> Testing GET /health endpoint...');
+server.emit('request', { url: '/health', method: 'GET' }, createMockRes(({ statusCode, body }) => {
+  assert.strictEqual(statusCode, 200, 'Health endpoint must return status code 200');
   const json = JSON.parse(body);
-  assert.strictEqual(json.status, 'UP', 'Health status should be UP');
-  console.log('✔ Test 1 Passed: /health endpoint returned 200 OK with status UP');
-});
-server.emit('request', reqHealth, resHealth);
+  assert.strictEqual(json.status, 'UP', 'Health status must be UP');
+  console.log('  ✔ Integration Test: /health returned status 200 and status="UP".');
+  testsPassed++;
 
-// Test 2: Verify root route (/)
-const reqRoot = { url: '/', method: 'GET' };
-const resRoot = createMockRes(({ statusCode, body }) => {
-  assert.strictEqual(statusCode, 200, 'Root endpoint must return status 200');
-  assert.ok(body.includes('Jenkins Node.js App'), 'Root endpoint should return app page');
-  console.log('✔ Test 2 Passed: / root endpoint returned 200 OK with valid HTML');
-});
-server.emit('request', reqRoot, resRoot);
+  // Test 3: API Info Endpoint
+  console.log('-> Testing GET /api/info endpoint...');
+  server.emit('request', { url: '/api/info', method: 'GET' }, createMockRes(({ statusCode: codeInfo, body: bodyInfo }) => {
+    assert.strictEqual(codeInfo, 200, 'Info endpoint must return 200');
+    const jsonInfo = JSON.parse(bodyInfo);
+    assert.strictEqual(jsonInfo.version, VERSION, `Version must match ${VERSION}`);
+    console.log(`  ✔ Integration Test: /api/info returned version ${jsonInfo.version}.`);
+    testsPassed++;
 
-// Test 3: Verify about route (/about)
-const reqAbout = { url: '/about', method: 'GET' };
-const resAbout = createMockRes(({ statusCode, body }) => {
-  assert.strictEqual(statusCode, 200, 'About endpoint must return status 200');
-  assert.ok(body.includes('Jenkins CI/CD'), 'About endpoint should mention Jenkins CI/CD');
-  console.log('✔ Test 3 Passed: /about endpoint returned 200 OK');
+    // Test 4: Calculation API Endpoint
+    console.log('-> Testing GET /api/calculate?a=20&b=30 endpoint...');
+    server.emit('request', { url: '/api/calculate?a=20&b=30', method: 'GET' }, createMockRes(({ statusCode: codeCalc, body: bodyCalc }) => {
+      assert.strictEqual(codeCalc, 200, 'Calculate endpoint must return 200');
+      const jsonCalc = JSON.parse(bodyCalc);
+      assert.strictEqual(jsonCalc.result, 50, '20 + 30 must equal 50');
+      console.log('  ✔ Integration Test: /api/calculate returned correct result 50.');
+      testsPassed++;
 
-  console.log('\n=======================================');
-  console.log('All Jenkins CI/CD tests PASSED successfully!');
-  console.log('=======================================');
-  process.exit(0);
-});
-server.emit('request', reqAbout, resAbout);
+      // Final report
+      console.log('====================================================');
+      console.log(`TEST SUCCESS: All ${testsPassed} tests PASSED with 0 errors!`);
+      console.log('====================================================');
+      process.exit(0);
+    }));
+  }));
+}));

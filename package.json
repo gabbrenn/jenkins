@@ -1,17 +1,22 @@
 {
   "name": "jenkins-node-app",
   "version": "1.0.0",
-  "description": "Node.js application designed for Jenkins CI/CD automation pipeline",
+  "description": "Node.js application designed for Jenkins CI/CD automation pipeline (Build, Test, Deploy)",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "node test.js"
+    "build": "node build.js",
+    "test": "node test.js",
+    "deploy": "node deploy.js"
   },
   "keywords": [
     "nodejs",
     "jenkins",
     "ci-cd",
-    "devops"
+    "devops",
+    "build",
+    "test",
+    "deploy"
   ],
   "author": "Gabiro Vladimir Brenn",
   "license": "ISC"
